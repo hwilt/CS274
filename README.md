@@ -1,2 +1,6 @@
 # CS274
- Spring 2021 CS Course
+
+Spring Freshman Year Course at Ursinus College
+-Taught by Professor Veca Schilling
+
+Course Founded in Computer Architectrure and Organization
