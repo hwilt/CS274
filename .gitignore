@@ -2,3 +2,8 @@
 *.stackdump
 *.class
 *.o
+/HW/nbproject/private/
+/HW/build/
+*.xml
+*.properties
+*.mf
