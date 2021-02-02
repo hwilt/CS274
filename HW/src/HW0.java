@@ -8,13 +8,9 @@ import java.util.*;
 
 public class HW0 {
     //This will hold the data of the file, line by line
-    public static ArrayList<String> FILE_DATA = new ArrayList<>();
+    public static ArrayList<String[]> FILE_DATA = new ArrayList<>();
     //This will hold the converted data
-    public static ArrayList<String> CONVERTED_DATA = new ArrayList<>();
-    //This is the index of the second comma in the line data
-    public static final int SECOND_COMMA = 3; 
-    //This is the index of the first comma in the line data
-    public static final int FIRST_COMA = 1; 
+    public static ArrayList<String[]> CONVERTED_DATA = new ArrayList<>();
     
     
     /**
@@ -28,13 +24,13 @@ public class HW0 {
             Scanner reader = new Scanner(file);
             while(reader.hasNextLine()){
                 String data = reader.nextLine();
-                if(isValidBase(data)){
-                    FILE_DATA.add(data);
+                String[] splits = data.split(",");
+                if(isValidBase(splits[0], splits[2])){
+                    FILE_DATA.add(splits);
                 }
                 else{
-                    String[] splits = data.split(",");
-                    data = splits[0] + "," + splits[1] + ",improper input";
-                    FILE_DATA.add(data);
+                    splits[2] = "improper input";
+                    FILE_DATA.add(splits);
                 }
             }
             reader.close();
@@ -53,8 +49,12 @@ public class HW0 {
         try {
             FileWriter writer = new FileWriter("conversion_out.txt");
             writer.write("Converter Results\n");
-            for(String i : FILE_DATA){
-                writer.write(i + "\n");
+            for(int i = 0; i < FILE_DATA.size(); i++){
+                String[] temp = FILE_DATA.get(i);
+                for(int j = 0; j < temp.length; j++){
+                    writer.write(temp[j] + ",");
+                }
+                writer.write("\n");
             }
             writer.close();
         } catch (IOException e) {
@@ -68,13 +68,12 @@ public class HW0 {
      * b, h, "298" B = binary which in the input "298" would not be proper
      * so return false.
      * 
-     * @param data the line data to check if the input is improper
+     * @param base the base for the value
+     * @param value is a string of the value
      * @return boolean isValid this will be true if the input is proper 
      */
-    public static boolean isValidBase(String data){
+    public static boolean isValidBase(String base, String value){
         boolean isValid = true;
-        String base = data.substring(0, FIRST_COMA);
-        String value = data.substring(SECOND_COMMA + 1);
         switch(base){ //checking each case Binary, Hexadecimal, and Decimal
             case "B": //Binary
                 for(int i = 0; i < value.length(); i++){
@@ -112,14 +111,76 @@ public class HW0 {
         return isValid;
     }
     
-    public static void convertValue(String data){
-        
+    /**
+     * This mehod will allow us to convert base binary, hexadecimal, and decimal 
+     * into each other easily. 
+     * 
+     * TODO: FINISH THE METHOD AND CONVERSION
+     * 
+     * @param base starting base of the value
+     * @param convertBase the base we want to convert the value to
+     * @param value the value in form of a string
+     */
+    public static void convertValue(String base, String convertBase, String value){
+        String[] convert = {convertBase, ""};
+        if(value.equalsIgnoreCase("improper input")){ //if value was not improper
+            convert[1] = "improper input";
+            CONVERTED_DATA.add(convert); //adding the value and its base to the converted array
+        }
+        else{
+            switch(convertBase){
+                case "B": //Binary
+                    convert[1] = convertBinary(base,value);
+                    break;
+                case "H": //Hexadecimal
+                    convert[1] = convertHex(base,value);
+                    break;
+                case "D": //Decimal
+                    convert[1] = convertDecimal(base,value);
+                    break;
+            }
+            CONVERTED_DATA.add(convert); //adding the value and its base to the converted array
+        }
+    }
+    
+    public static String convertBinary(String base, String value){
+        String convertedValue = "";
+        if(base.equals("H")){
+            
+        }
+        else if(base.equals("D")){
+            
+        }
+        return convertedValue;
+    }
+    
+    public static String convertHex(String base, String value){
+        String convertedValue = "";
+        if(base.equals("B")){
+            
+        }
+        else if(base.equals("D")){
+            
+        }
+        return convertedValue;
+    }
+    
+    public static String convertDecimal(String base, String value){
+        String convertedValue = "";
+        if(base.equals("H")){
+            
+        }
+        else if(base.equals("B")){
+            
+        }
+        return convertedValue;
     }
     
     public static void main(String[] args){
         readFile();
-        for(String i: FILE_DATA){
-            System.out.println(i);
+        for(int i = 0; i < FILE_DATA.size(); i++){
+            String[] temp = FILE_DATA.get(i);
+            convertValue(temp[0], temp[1], temp[2]);
         }
         writeFile();
     }
