@@ -51,9 +51,8 @@ public class HW0 {
             writer.write("Converter Results\n");
             for(int i = 0; i < FILE_DATA.size(); i++){
                 String[] temp = FILE_DATA.get(i);
-                for(int j = 0; j < temp.length; j++){
-                    writer.write(temp[j] + ",");
-                }
+                String[] convertedTemp = CONVERTED_DATA.get(i);
+                writer.write(temp[2] + " " + temp[0] + " = " + convertedTemp[1] + " " + convertedTemp[0]);
                 writer.write("\n");
             }
             writer.close();
@@ -112,7 +111,7 @@ public class HW0 {
     }
     
     /**
-     * This mehod will allow us to convert base binary, hexadecimal, and decimal 
+     * This method will allow us to convert base binary, hexadecimal, and decimal 
      * into each other easily. 
      * 
      * TODO: FINISH THE METHOD AND CONVERSION
@@ -130,20 +129,20 @@ public class HW0 {
         else{
             switch(convertBase){
                 case "B": //Binary
-                    convert[1] = convertBinary(base,value);
+                    convert[1] = convertToBinary(base,value);
                     break;
                 case "H": //Hexadecimal
-                    convert[1] = convertHex(base,value);
+                    convert[1] = convertToHex(base,value);
                     break;
                 case "D": //Decimal
-                    convert[1] = convertDecimal(base,value);
+                    convert[1] = convertToDecimal(base,value);
                     break;
             }
             CONVERTED_DATA.add(convert); //adding the value and its base to the converted array
         }
     }
     
-    public static String convertBinary(String base, String value){
+    public static String convertToBinary(String base, String value){
         String convertedValue = "";
         if(base.equals("H")){
             
@@ -154,7 +153,7 @@ public class HW0 {
         return convertedValue;
     }
     
-    public static String convertHex(String base, String value){
+    public static String convertToHex(String base, String value){
         String convertedValue = "";
         if(base.equals("B")){
             
@@ -165,13 +164,35 @@ public class HW0 {
         return convertedValue;
     }
     
-    public static String convertDecimal(String base, String value){
+    public static String convertToDecimal(String base, String value){
         String convertedValue = "";
         if(base.equals("H")){
-            
+            int exp = 1;
+            int val = 0;
+            for(int i = value.length() - 1; i >= 0; i--){
+                int temp = value.charAt(i);
+                boolean isTrue = temp == '0' && temp == '1' && temp == '2' && 
+                        temp == '3' && temp == '4' && temp == '5' &&
+                        temp == '6' && temp == '7' && temp == '8' && temp != '9' 
+                        && temp == 'A' && temp == 'B' && temp == 'C' && temp == 'D'
+                        && temp == 'E' && temp == 'F';
+                if(isTrue){
+                    val += exp;
+                }
+                exp *= 16;
+            }
+            convertedValue += val;
         }
         else if(base.equals("B")){
-            
+            int exp = 1;
+            int val = 0;
+            for(int i = value.length() - 1; i >= 0; i--){
+                if(value.charAt(i) == '1'){
+                    val += exp;
+                }
+                exp *= 2;
+            }
+            convertedValue += val;
         }
         return convertedValue;
     }

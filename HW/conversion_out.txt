@@ -1,7 +1,5 @@
 Converter Results
-B,H,1001,
-H,D,A234,
-D,B,2002,
-B,H,improper input,
-H,D,improper input,
-D,H,improper input,
+1001 B = 9 D
+1000 B = 8 D
+0010 B = 2 D
+1 H = 0 D
