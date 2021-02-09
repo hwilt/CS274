@@ -15,7 +15,35 @@ main:
 	add $t4, $t2, $t3	# Add
 	sub $t5, $t2, $t3	# Subtract
 	sw $t5, Z		#Store the answer in Z (declared at the bottom)  
-
+	
+	
+	#printing $t4 addition
+	
+	li	$v0, 4 		#syscall 4 is print string
+	la	$a0, msg1	#the message
+	syscall
+		#this is printing the addition sum
+	li	$v0,1		# print_int syscall code = 1
+	move	$a0, $t4	# int to print must be loaded into $a0
+	syscall
+	
+	
+	# Print \n
+	li	$v0,4		# print_string syscall code = 4
+	la	$a0, newline
+	syscall
+	
+	#printing $t5 subtraction
+	
+	li	$v0, 4 		#syscall 4 is print string
+	la	$a0, msg1	#the message
+	syscall
+		#this is printing the subtraction sum
+	li	$v0,1		# print_int syscall code = 1
+	move	$a0, $t5	# int to print must be loaded into $a0
+	syscall
+	
+	
 	# Exit the program by means of a syscall.
 	# There are many syscalls - pick the desired one
 	# by placing its code in $v0. The code for exit is "10"
@@ -32,3 +60,6 @@ main:
 	# (or a comma separated list of initial values)
 value:	.word 12
 Z:	.word 0
+msg1:	.asciiz	"$t4:   "
+msg2:	.asciiz	"$t5:   "
+newline:   .asciiz	"\n"
