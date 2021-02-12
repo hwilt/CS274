@@ -1,5 +1,6 @@
-# A demonstration of some simple MIPS instructions
-# used to test QtSPIM
+# Author: Henry Wilt
+# Class: CS274
+# Feburay 9th, 2021
 
 	# Declare main as a global function
 	.globl main 
@@ -16,29 +17,25 @@ main:
 	sub $t5, $t2, $t3	# Subtract
 	sw $t5, Z		#Store the answer in Z (declared at the bottom)  
 	
-	
-	#printing $t4 addition
-	
+############### Printing $t4 addition
 	li	$v0, 4 		#syscall 4 is print string
 	la	$a0, msg1	#the message
 	syscall
-		#this is printing the addition sum
+				#this is printing the addition sum
 	li	$v0,1		# print_int syscall code = 1
 	move	$a0, $t4	# int to print must be loaded into $a0
 	syscall
 	
-	
-	# Print \n
+############### Print \n
 	li	$v0,4		# print_string syscall code = 4
 	la	$a0, newline
 	syscall
 	
-	#printing $t5 subtraction
-	
+############### Printing $t5 subtraction
 	li	$v0, 4 		#syscall 4 is print string
-	la	$a0, msg1	#the message
+	la	$a0, msg2	#the message
 	syscall
-		#this is printing the subtraction sum
+				#this is printing the subtraction sum
 	li	$v0,1		# print_int syscall code = 1
 	move	$a0, $t5	# int to print must be loaded into $a0
 	syscall
