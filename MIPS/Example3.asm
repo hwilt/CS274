@@ -6,28 +6,10 @@
 	
 	.globl	main
 main:
-	# Print string msg1
-	li	$v0,4		# print_string syscall code = 4
-	la	$a0, msg1	# load the address of msg
-	syscall
 
-	# Get input A from user and save
-	li	$v0,5		# read_int syscall code = 5
-	syscall	
-	move	$t0,$v0		# syscall results returned in $v0
-
-	# Print string msg2
-	li	$v0,4		# print_string syscall code = 4
-	la	$a0, msg2	# load the address of msg2
-	syscall
-
-	# Get input B from user and save
-	li	$v0,5		# read_int syscall code = 5
-	syscall	
-	move	$t1,$v0		# syscall results returned in $v0
-
-	# Math!
-	add	$t0, $t0, $t1	# A = A + B
+	li $t5, 8
+	addi $t5, $t5 2
+	sll $t1, $t5, 3
 
 	# Print string msg3
 	li	$v0, 4
@@ -36,7 +18,7 @@ main:
 
 	# Print sum
 	li	$v0,1		# print_int syscall code = 1
-	move	$a0, $t0	# int to print must be loaded into $a0
+	move	$a0, $t1	# int to print must be loaded into $a0
 	syscall
 
 	# Print \n
