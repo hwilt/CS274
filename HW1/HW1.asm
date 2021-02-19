@@ -69,7 +69,7 @@ main:
 	
 	
 	li $v0, 10 # Sets $v0 to "10" to select exit syscall
-	syscall # Exitx
+	syscall # Exit
 
 	.data
 	
