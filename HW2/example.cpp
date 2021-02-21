@@ -30,8 +30,7 @@ void printTriangle(int rows, char ch){
                     cout << ch; 
                 else
                     cout << " "; 
-                k++; 
-                ; 
+                k++;  
             } 
             k = 0;
             //isHollow = false; 
