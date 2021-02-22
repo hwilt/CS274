@@ -19,9 +19,24 @@ rows:
 	la	$a0, newline	# load the address of newline
 	syscall
 	
-	#check if number of rows is below zero
+	#if(rows <= 0){
+	#	ask for the number of rows again
+	#}
+	# check if number of rows is below zero
 	slti	$s1,$t0,0	# sets $s1 to 0 if $t0 is greater than 0
 	bne	$s1,$zero,rows	# if not equal to zero than goes and asks for a new number
+	
+	#if(rows % 2 == 0){
+	#	rows++;
+	#}
+	# checks if rows is even then add 1
+	li	$t6,2
+	div	$t0,$t6		# rows % 2 = high value
+	mfhi	$t6		# gets the high value (remindar)
+	bnez	$t6,e		# branch to e if remindar does not equal 0
+	addi	$t0,$t0,1	# adding 1 to the row
+	e:	# skip over the addition
+		
 	
 	# Getting the character to be used for the pyramid from user
 	li	$v0,4		# print_string syscall code = 4
