@@ -8,3 +8,5 @@
 *.properties
 *.mf
 /HW/dist/
+Labs/MIPSFUN.jar
+*.jar
