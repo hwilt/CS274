@@ -29,14 +29,11 @@ open:	li   	$v0, 13       		# system call for open file
 read:	li	$v0,14			# read from file sys call
 	move	$a0, $s6		# put file descriptor in $a0
 	la	$a1, readBuffer		# data will be read from file into memory
-	li	$a2, 2048		# number of bytes to read
+	li	$a2, 32768		# number of bytes to read
 	syscall
 	
 	# Save the number of characters we read to a register
   	move 	$t4, $v0		# $v0 contains the number of characters read from the file.
-  	# li   $v0,1			# printing out the number of characters read for a sanity check
-  	# move $a0, $t4
-  	# syscall
   	
 	# Close the input file 
 closeIn:
@@ -44,19 +41,11 @@ closeIn:
   	move 	$a0, $s6      		# file descriptor to close
   	syscall  
 	
-  
-  	
-  		
-  			
-  				
-	#  -- Open (for writing) a file.  If it exists, it will be clobbered (overwritten)
-write: 	li	$v0, 13       		# system call for open file
-  	la   	$a0, outFile 		# output file name
-  	li   	$a1, 1        		# Open for writing (flags are 0: read, 1: write)
-  	li   	$a2, 0        		# mode is ignored
-  	syscall            		# open a file (file descriptor returned in $v0)
-  	move 	$s7, $v0      		# save the file descriptor 
-				
+					
+  	# Initialize loop counter and terminating value before loop starts
+	la	$a2, writeBuffer	
+	lb 	$t7,($a2)		#  $a2 is address of buffer, load current byte in $t7			
+		
 	# Initialize loop counter, EOL registers and terminating value before loop starts
 	li   	$t0,0			#  $t0 will hold the value 0 AKA the null terminator
 	la	$a1, readBuffer		#  data will be read from file into memory (the data section)
@@ -68,11 +57,14 @@ write: 	li	$v0, 13       		# system call for open file
 	li 	$t2, 0xA
 	
 	# Initialize line number counter, and boolean isStart
-	li	$t5, 1
+	li	$t5, 0
 	li	$t6, 0
 	
+	# colon and space in ascii
+	li	$t8, 0x3a
+	
 	# Start the loop a-runnin'
-pLoop:	
+Loop:	
 	beq 	$t0,$t1,write		# if current byte == null terminator, we're at end of file, exit
 	
 	# if boolean start is true then branch to startline
@@ -83,47 +75,83 @@ pLoop:
 	li	$t6, 0			# set boolean to true
 
 
-	# Print current character
+	# moves the character from the readBuffer to storeBuffer
 notEOL:	
-	#li	$v0, 11			# system call code for print single character
-	#lb	$a0,($a1)		# load character to print
-	#syscall				# print that sucker
+	# store byte in the writebuffer
+	sb	$t1,($a2)
 
 	# Get the next character in the string
 	addi	$a1,$a1,1		# move pointer (aka index) to next byte in string
 	lb 	$t1,($a1)		# load char at new index
-	j	pLoop			# jump to top of loop
+	addi	$a2,$a2,1		# move pointer (aka index) to next byte in string
+	j	Loop			# jump to top of loop
 	
-	# prints out (num) + :_ + text
+	# stores (num) + :_ + text in writeBuffer
 startLine:
 	li	$t6,1			# set boolean to false
-	#li	$v0,1			# load sys id for print int
-	#move	$a0,$t5			# print out the count of lines.
-	#syscall
 	
-	#li	$v0,4			# load sys id for print string
-	#la	$a0,linedelim		# prints out the :_
-	#syscall
-	li   	$v0, 15       		# system call for write to file
-  	move 	$a0, $s7      		# file descriptor
-	move 	$a1,
+	# push to stack so you dont lose the line number count
+	addi	$sp,$sp,-4		# push back 4 bytes to put the count on
+	sw	$t5,0($sp)
+	
+	la	$a3, digits		# address of digit
+	li	$s4, 0			# number of digits
+	jal	lineNumber
+
+	# pop back
+	lw	$t5,0($sp)		# load back the line number count to $t5
+	addi	$sp,$sp,4		# set stack back to normal
+		
+	# move :_ into writebuffer
+	sb	$t8,($a2)		# stores ":" into the write buffer
+	addi	$a2,$a2,2		# move pointer (aka index) to next byte in string
+	
 	addi	$t5,$t5,1		# up the count of lines + 1
-	j	pLoop
+	j	Loop
+
+	# correctly puts the line numbers in order in ascii values
+lineNumber:
+	
+	div	$s0,$t5,10		# find the modus of 10
+	mfhi	$s0			# move the modus into $s0
+	addi	$s0,$s0,0x30		# adds by 0x30 for the ascii values to line up correctly
+	sw	$s0,0($a3)		# stores the number into the digits
+	div	$t5,$t5,10		# divide so you lose the last digit of the number
+	addi	$a3,$a3,-4		# move pointer (aka index) to next byte in string
+	addi	$s4,$s4,1		# adds the number of digits by 1
+	beqz	$t5,addToBuffer
+	j lineNumber
+addToBuffer:
+	addi	$a3,$a3,4		# gets each digit of the number
+	lb 	$s5,($a3)		# load that digit into $s5
+	sb	$s5,($a2)		# stores the number into the writeBuffer
+	addi	$a2,$a2,1		# move pointer (aka index) to next byte in string
+	addi	$s4,$s4,-1		# subtract the number of digits by 1
+	beqz	$s4,exit_LineNumber
+	j	addToBuffer
+exit_LineNumber:
+	jr	$ra
+
   	
-  	
+	#  -- Open (for writing) a file.  If it exists, it will be clobbered (overwritten)
+write: 	li	$v0, 13       		# system call for open file
+  	la   	$a0, outFile 		# output file name
+  	li   	$a1, 1        		# Open for writing (flags are 0: read, 1: write)
+  	li   	$a2, 0        		# mode is ignored
+  	syscall            		# open a file (file descriptor returned in $v0)
+  	move 	$s7, $v0      		# save the file descriptor   	
   	
 	# -- Write buffer to output file
    	li   	$v0, 15       		# system call for write to file
   	move 	$a0, $s7      		# file descriptor 
-  	move 	$a1, $t1  		# address of buffer from which to write
-  	li  	$a2, 2048      		# hardcoded buffer length
+  	la 	$a1, writeBuffer	# address of buffer from which to write
+  	li  	$a2, 32768      	# hardcoded buffer length
   	syscall            		# write to file
 
 closeOut:# -- Close the output file 
   	li   	$v0, 16       		# system call for close file
   	move 	$a0, $s7      		# file descriptor to close
   	syscall   
- 
 
 Exit:	li	$v0,10
 	syscall
@@ -133,9 +161,9 @@ Exit:	li	$v0,10
 
 	.data
 
-
-readBuffer:.space 2048				# where the data will be stored when we read it in
-linedelim:.asciiz ": "				# line count ie ((num): ----text--)
-EOL:	.asciiz "\n"
-inFile:	.asciiz	"in.txt"			# name for input file
-outFile:.asciiz "out.txt"			# name for output file
+digits:		.space 		16
+readBuffer:	.space 		32768			# where the data will be stored when we read it in
+writeBuffer:	.space 		32768			# where the data will be stored to write it.
+EOL:		.asciiz		"\n"
+inFile:		.asciiz		"in.txt"		# name for input file
+outFile:	.asciiz 	"out.txt"		# name for output file
