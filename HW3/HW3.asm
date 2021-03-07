@@ -94,9 +94,9 @@ rows:
 	# no returns
 proc2:
 	# Register Map
+	# $a1 = hollow buffer 
 	# $t0 = triangle height
 	# $t1 = triangle character (ascii)
-	# $t2 = hollow buffer (for data to be written to file)
 	# $t3 = EOL
 	# $t4 = Space (ascii)
 	# $t5 = int i
@@ -114,15 +114,14 @@ proc2:
 	move	$t1,$a1
 	
 	# Initialize loop counter, EOL registers before loop starts
-	li   	$t0,0			# $t0 will hold the value 0 AKA the null terminator
+	#li   	$t0,0			# $t0 will hold the value 0 AKA the null terminator
 	la	$a1, hollowBuffer	# data will be written to file from memory (the data section)
-	lb 	$t2,($a1)		# $a1 is address of buffer, load current byte in $t2
 	li 	$t3, 0xA		# end of line character
 	li	$t4, 0x20		# space character
 	
 	#int i, j, k = 0; 
-    	#for (i = 1; i <= n; i++){ 
-        #	for (j = i; j < n; j++) { 
+    	#for (i = 1; i <= rows; i++){ 
+        #	for (j = i; j < rows; j++) { 
         #    		cout << " "; 
         #	} 
         #	while (k != (2 * i - 1)) { 
@@ -135,7 +134,7 @@ proc2:
         #	k = 0; 
         #	cout << endl; // print next row 
     	#} 
-    	#for (i = 0; i < 2 * n - 1; i++) { 
+    	#for (i = 0; i < 2 * rows - 1; i++) { 
         #	cout << "character"; 
     	#} 
 	
@@ -151,9 +150,7 @@ forHollow:
 	beq 	$t0, $t5, HollowLast	# checks if it's the last row
 	move	$t6,$t5			# sets j = i
 	forHollow_Spaces:
-		li	$v0,11		# print_character syscall code = 11
-		move	$a0,$t4		# 32 is the ascii code for whitespace 
-		syscall
+		addi	$a1,$a1,1	# increment the buffer to give whitespace
 		addi	$t6,$t6,1	# increments j by 1
 		blt	$t6,$t0,forHollow_Spaces
 		
@@ -163,36 +160,30 @@ forHollow:
 			sub	$t9,$t9,2	# $t9 = (i * 2) - 2
 			bne	$t7,$t9,Else	# if k != 2 * i - 2 then go to else
 		IF:
-			li	$v0, 11 	# print_character syscall code = 11
-			move	$a0, $t1	# moves character to printing
-			syscall
+			sb	$t1,($a1)	# store character in buffer
+			addi	$a1,$a1,1	# increment the buffer
 			j	Exit		# skipping the false claim
 		Else:
-			li	$v0,11	 	# print_character syscall code = 11
-			move	$a0,$t4		# 32 is the ascii code for whitespace
-			syscall
+			sb	$t4,($a1)	# store space in buffer
+			addi	$a1,$a1,1	# increment the buffer
 		Exit:
 		mul	$t9,$t5,2		# i * 2
 		sub	$t9,$t9,1		# $t9 = (i * 2) - 1
 		addi 	$t7,$t7,1		# increments k by 1
 		bne	$t7,$t9,whileHollow	# checks if k != (2 * i - 1)
 		
-		li	$v0,4		
-		la	$a0, newline	# load the address of newline
-		syscall
+		sb	$t3,($a1)	# store newline in the buffer
+		addi	$a1,$a1,1	# increment the buffer	
 		li	$t7, 0		# set k back to zero
 		addi	$t5,$t5,1	# increments i by 1
 		j	forHollow	# jumps back up to the top of the loop
 HollowLast:
 	li 	$t5, 0			# i = 0
 	PrintHollowChars:
-		li	$v0, 11 	# print_character syscall code = 11
-		move	$a0, $t1	# moves character to printing
-		syscall	
+		sb	$t1,($a1)	# store character in the buffer
+		addi	$a1,$a1,1	# increment the buffer	
 		addi	$t5,$t5,1	# increments i by 1
 		blt	$t5,$t8,PrintHollowChars	
-
-	j	exitHollow
 
 	#  -- Open (for writing) a file.  If it exists, it will be clobbered (overwritten)
 writeHollow: 	
@@ -225,7 +216,7 @@ closeOutHollow:
 	move	$a0,$t0
 	move	$a1,$t1
 		
-	#jal	proc3
+	jal	proc3
 	
 	lw	$ra,0($sp)	# load $ra
 	addi	$sp,$sp,4	# move stack pointer up
@@ -250,19 +241,62 @@ exitHollow:
 	# no returns
 proc3:
 	# Register Map
+	# $a1 = solid buffer 
 	# $t0 = triangle height
-	# $t1 = triangle character
-	# $t2 = solid buffer (for data to be written to file)
+	# $t1 = triangle character (ascii)
 	# $t3 = EOL
-	
+	# $t4 = Space (ascii)
+	# $t5 = int i
+	# $t6 = int j
+	# $t7 = int k
+	# $t8 = 2 * rows
 	# $s7 = Text file descriptor (for solid)
 	
+	move	$t0,$a0
+	move	$t1,$a1
+	
+	# Initialize loop counter, EOL registers before loop starts
+	#li   	$t0,0			# $t0 will hold the value 0 AKA the null terminator
+	la	$a1, solidBuffer	# data will be written to file from memory (the data section)
+	li 	$t3, 0xA		# end of line character
+	li	$t4, 0x20		# space character
+	
+	li	$t5, 0			# set i to 1
 	
 	
+        #for (int i = 0; i < rows; i++) { 
+        #   for (int j = rows - 1; j >= i; j--) { 
+        #       System.out.print(" "); 
+        #   } 
+        #   for (int j = 1; j <= i; j++) { 
+        #        System.out.print("* "); 
+        #   } 
+        #   System.out.println(); 
+        #} 
+
+forSolid:
+	move	$t6, $t0		# set j to rows
+	addi	$t6,$t6,-1		# j = rows - 1
+	forSolid_Spaces:
+		addi	$a1,$a1,1			# increment the buffer to give whitespace
+		addi	$t6,$t6,-1			# deincrement j by 1
+		blt	$t6,1,forSolid_Spaces		# branch if j > 1
 	
+	li	$t6, 0			# set j to 0
+	forSolid_Characters:
+		sb	$t1,($a1)			# store character in the buffer
+		addi	$a1,$a1,1			# increment the buffer	
+		addi	$t6,$t6,1			# increment j by 1
+		ble	$t6,$t5,forSolid_Characters	# branchif j <= i
 	
+	newLineSolid:
+		sb	$t3,($a1)			# store newline in the buffer
+		addi	$a1,$a1,1			# increment the buffer	
 	
-	
+	# incrementing and condition	
+	addi	$t5,$t5,1		# increments i by 1
+	blt	$t5,$t0,forSolid	# jumps back up to the top of the loop
+		
 	
 	#  -- Open (for writing) a file.  If it exists, it will be clobbered (overwritten)
 writeSolid: 	
