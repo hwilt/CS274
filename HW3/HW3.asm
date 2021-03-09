@@ -261,33 +261,43 @@ proc3:
 	li 	$t3, 0xA		# end of line character
 	li	$t4, 0x20		# space character
 	
-	li	$t5, 0			# set i to 1
+	li	$t5, 1			# set i to 1
 	
 	
-        #for (int i = 0; i < rows; i++) { 
-        #   for (int j = rows - 1; j >= i; j--) { 
-        #       System.out.print(" "); 
-        #   } 
-        #   for (int j = 1; j <= i; j++) { 
-        #        System.out.print("* "); 
-        #   } 
-        #   System.out.println(); 
+        #for (int i = 1; i < rows; i++) { 
+        #	if(i != rows){
+        #   		for (int j = rows - i; j >= i; j--) { 
+        #       		System.out.print(" "); 
+        #   		} 
+        #   		for (int j = 1; j <= i * 2 - 1; j++) { 
+        #        		System.out.print("*"); 
+        #   		} 
+        #   		System.out.println(); 
+        #	}
+        #	else{
+        #   		for (int j = 1; j <= i * 2 - 1; j++) { 
+        #        		System.out.print("*"); 
+        #   		}
+        #	}
         #} 
-
+	
 forSolid:
+	beq	$t5,$t0,SolidLast	# branch if the last row
 	move	$t6, $t0		# set j to rows
-	addi	$t6,$t6,-1		# j = rows - 1
+	sub	$t6,$t6,$t5
 	forSolid_Spaces:
 		addi	$a1,$a1,1			# increment the buffer to give whitespace
 		addi	$t6,$t6,-1			# deincrement j by 1
-		blt	$t6,1,forSolid_Spaces		# branch if j > 1
+		bgt	$t6,$zero,forSolid_Spaces	# branch if j > 0
 	
-	li	$t6, 0			# set j to 0
+	li	$t7, 1			# set k to 1
 	forSolid_Characters:
 		sb	$t1,($a1)			# store character in the buffer
 		addi	$a1,$a1,1			# increment the buffer	
-		addi	$t6,$t6,1			# increment j by 1
-		ble	$t6,$t5,forSolid_Characters	# branchif j <= i
+		addi	$t7,$t7,1			# increment j by 1
+		mul	$t8,$t5,2			# multiply i by 2
+		addi	$t8,$t8,-1			# subtract i by 1
+		ble	$t7,$t8,forSolid_Characters	# branch if j <= i
 	
 	newLineSolid:
 		sb	$t3,($a1)			# store newline in the buffer
@@ -295,8 +305,17 @@ forSolid:
 	
 	# incrementing and condition	
 	addi	$t5,$t5,1		# increments i by 1
-	blt	$t5,$t0,forSolid	# jumps back up to the top of the loop
-		
+	ble	$t5,$t0,forSolid	# jumps back up to the top of the loop
+	
+SolidLast:
+	li	$t7, 1			# set k to 1
+	forSolid_Characters_Last:
+		sb	$t1,($a1)				# store character in the buffer
+		addi	$a1,$a1,1				# increment the buffer	
+		addi	$t7,$t7,1				# increment j by 1
+		mul	$t8,$t5,2				# multiply i by 2
+		addi	$t8,$t8,-1				# subtract i by 1
+		ble	$t7,$t8,forSolid_Characters_Last	# branch if j <= i	
 	
 	#  -- Open (for writing) a file.  If it exists, it will be clobbered (overwritten)
 writeSolid: 	
