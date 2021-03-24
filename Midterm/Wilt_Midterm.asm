@@ -8,6 +8,13 @@
 	
 main:
 #---------Function 1-------------
+	# Print out the name of the function
+	li	$v0,4		# sycall command - string print
+	la	$a0,func1	# load func
+	syscall
+	la	$a0,newline	# load newline
+	syscall
+	
 	# Print out array
 	la	$a0,array	# loads the array for the first procedure
 	la	$a1,arraysz	# loads the size of the array for the first procedure
@@ -18,8 +25,8 @@ main:
 	la	$a1,arraysz	# loads the size of the array for the first procedure
 	jal 	findMinMax	# jumps to the find min & max and stores the next instruction in $ra
 	
-	move	$v0,$t0		# sets the max to $t0
-	move	$v1,$t1		# sets the min to $t1
+	move	$t0,$v0		# sets the max to $t0
+	move	$t1,$v1		# sets the min to $t1
 	
 	# Printing out the max
 	li	$v0,4		# syscall command - print string
@@ -28,8 +35,8 @@ main:
 	li	$v0,1		# syscall command - print int
 	move	$a0,$t0		# move the max to be printed
 	syscall
-	li	$v0,4			# sycall command - string print
-	la	$a0,newline		# load newline
+	li	$v0,4		# sycall command - string print
+	la	$a0,newline	# load newline
 	syscall
 	
 	# Printing out the min
@@ -37,16 +44,31 @@ main:
 	la	$a0,msgMIN	# load string to be printed
 	syscall
 	li	$v0,1		# syscall command - print int
-	move	$a0,$t0		# move the min to be printed
+	move	$a0,$t1		# move the min to be printed
+	syscall
+	li	$v0,4		# sycall command - string print
+	la	$a0,newline	# load newline
 	syscall
 	
 	# Print out array
 	la	$a0,array	# loads the array for the first procedure
 	la	$a1,arraysz	# loads the size of the array for the first procedure
 	jal	printArray	# jumpts to the print array method and stores the next instruction in $ra
+
+	# Print out new line
+	li	$v0,4		# sycall command - string print
+	la	$a0,newline	# load newline
+	syscall
 	
+#---------Function 2------------
 	
-#---------Function 2-------------
+	# Print out the name of the function
+	li	$v0,4		# sycall command - string print
+	la	$a0,func2	# load func
+	syscall
+	la	$a0,newline	# load newline
+	syscall
+	
 	# Print orginial String
 	li	$v0,4		# syscall command - print string
 	la	$a0,msgOrginial	# load string to be printed
@@ -59,7 +81,7 @@ main:
 	# Call method
 	la	$a0,string	# loads the string 
 	jal 	CapString	# jumps to the capstring method and stores the next instruction in $ra
-	move	$t0,v0		# moves the capitizedString into $t0
+	move	$t0,$v0		# moves the capitizedString into $t0
 	
 	# Print orginial String
 	li	$v0,4		# syscall command - print string
@@ -79,12 +101,24 @@ main:
 	la	$a0,newline
 	syscall
 	
+	# Print out new line
+	li	$v0,4		# sycall command - string print
+	la	$a0,newline	# load newline
+	syscall
+	
 #---------Function 3-------------
+	
+	# Print out the name of the function
+	li	$v0,4		# sycall command - string print
+	la	$a0,func3	# load func
+	syscall
+	la	$a0,newline	# load newline
+	syscall
 	
 	# Call the method
 	jal 	userAsking	# jumps to the first procedure and stores the next instruction in $ra
-	la	$t0,$v0		# $t0 = input
-	la	$v0,$v1		# $t1 = value
+	la	$t0,($v0)	# $t0 = input
+	la	$v0,($v1)	# $t1 = value
 	
 	# Echo the input
 	
@@ -131,7 +165,10 @@ printArray:
 		li	$v0,1			# syscall command - int print
 		lw	$a0,($t1)		# load word
 		syscall
-		
+	# print a newline
+	li	$v0,4		# sycall command - string print
+	la	$a0,newline	# load newline
+	syscall	
 	jr	$ra		# Returns to the main method
 
 
@@ -146,7 +183,63 @@ printArray:
 	# $v0 - max
 	# $v1 - min
 findMinMax:
-
+	# Register Map:
+	# $t0 = current max
+	# $t1 = current min
+	# $t2 = int i
+	# $t3 = array
+	# $t4 = array size	
+	
+	# find max in java
+	# public static int getMax(int[] inputArray){ 
+	#	int maxValue = inputArray[0]; 
+    	# 	for(int i=0;i < inputArray.length;i++){ 
+      	# 		if(inputArray[i] > maxValue){ 
+        # 			maxValue = inputArray[i]; 
+      	# 		} 
+    	# 	} 
+    	# 	return maxValue; 
+  	# }
+		
+  	getMax:
+  		la	$t3,($a0)	# set address of array
+  		lw	$t4,($a1)	# set the size
+  		li	$t2,1		# int i = 1
+  		lw	$t0,($t3)	# set starting max
+  		getMax_For:
+  			blt	$t3,$t0,Max_Else	# branch if current element is less than current max
+  			lw	$t0,($t3)		# set current max
+  			Max_Else:
+  			addi	$t3,$t3,4		# increment by 4 to get to the next element
+  			addi	$t2,$t2,1		# increment i by 1
+  			ble	$t2,$t4,getMax_For	# branch if i is less than array length 
+  	move	$v0,$t0		# set the first return register to current max	
+  	  	  	
+  	  	
+  	# find min in java
+	# public static int getMax(int[] inputArray){ 
+	#	int minValue = inputArray[0]; 
+    	# 	for(int i=1;i < inputArray.length;i++){ 
+      	# 		if(inputArray[i] < minValue){ 
+        # 			minValue = inputArray[i]; 
+      	# 		} 
+    	# 	} 
+    	# 	return maxValue; 
+  	# }
+	
+	getMin:
+  		la	$t3,($a0)	# set address of array
+  		lw	$t4,($a1)	# set the size
+  		li	$t2,1		# int i = 1
+  		lw	$t1,($t3)	# set starting min
+  		getMin_For:
+  			bgt	$t3,$t1,Min_Else	# branch if current element is less than current min
+  			lw	$t1,($t3)		# set current max
+  			Min_Else:
+  			addi	$t3,$t3,4		# increment by 4 to get to the next element
+  			addi	$t2,$t2,1		# increment i by 1
+  			ble	$t2,$t4,getMin_For	# branch if i is less than array length 
+  	move	$v1,$t1		# set the second return register to current max	
 	jr	$ra		# Returns to the main method
 	
 	
@@ -179,7 +272,7 @@ CapString:
 userAsking:
 	# moving the stack pointer
 	addi	$sp,$sp,-4	# move the stack pointer down
-	sw	$sp,($ra)	# store the return address
+	sw	$ra,($sp)	# store the return address
 	
 	# calling the conversion
 	jal	convertBtD	# jumps to convert method and stores the return address
@@ -220,3 +313,6 @@ arraysz:	.word		8				# array size
 msgMAX:		.asciiz		"Max of Array: "
 msgMIN:		.asciiz		"Min of Array: "
 newline: 	.asciiz		"\n"
+func1:		.asciiz		"Function 1:"
+func2:		.asciiz		"Function 2:"
+func3:		.asciiz		"Function 3:"
