@@ -248,6 +248,7 @@ findMinMax:
 #--------------CapString-------------------------
 	# Capitalize the string
 	# subtract 32 in ascii to get capitalized letters
+	# only if the ascii is between 97-122 (ONLY!!)
 	#
 	# Arguments:
 	# $a0 - string
@@ -255,7 +256,24 @@ findMinMax:
 	# Returns:
 	# $v0 - capitalized string
 CapString:
-
+	# Register Map:
+	# $t0 = orginial string
+	# $t1 = capitalized string pointer
+	# $t2 = end of line character
+	
+	# create pointers for both strings
+	lb	$t0,($a0)		# orginial string pointer
+	lb	$t1,capString		# capitalized string pointer
+	li 	$t2, 0xA		# end of line character
+	
+	string_For:
+		
+		notLower:
+			
+	
+	
+	# return values
+	move	$v0,$t1
 	jr	$ra		# Returns to the main method
 	
 	
