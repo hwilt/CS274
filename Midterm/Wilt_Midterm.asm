@@ -96,7 +96,7 @@ main:
 	li	$v0,4			# syscall command - print string
 	la	$a0,msgCapitalized	# load string to be printed
 	syscall
-	la	$a0,string		# load string to be printed
+	la	$a0,($t0)		# load string to be printed
 	syscall
 	la	$a0,newline
 	syscall
@@ -257,20 +257,40 @@ findMinMax:
 	# $v0 - capitalized string
 CapString:
 	# Register Map:
-	# $t0 = orginial string
-	# $t1 = capitalized string pointer
-	# $t2 = end of line character
+	# $a0 = orginial string pointer
+	# $t0 = orginial string current char
+	# $t1 = capitalized string 
+	# $t2 = null character
 	
 	# create pointers for both strings
-	lb	$t0,($a0)		# orginial string pointer
-	lb	$t1,capString		# capitalized string pointer
-	li 	$t2, 0xA		# end of line character
+	lb	$t0,($a0)		# orginial string current character
+	la	$t1,capString		# capitalized string
+	li 	$t2,0x0			# null character
 	
 	string_For:
+		beq	$t2,$t0,IF_NULL		# branch if current character = end of line character
+		blt	$t0,0x61,notLower 	# branch if current character < 0x61 or 'a'
+		bgt	$t0,0x7A,notLower	# branch if current character > 0x7A or 'z'
 		
+		# subtract the current char by 32 to get the capitalized char
+		subi	$t0,$t0,32		# subi
+		
+		sb	$t0,($t1)		# store char into the capitalized string
+		addi	$a0,$a0,1		# move pointer (aka index) to next byte in string
+		lb 	$t0,($a0)		# load char at new index
+		addi	$t1,$t1,1		# move pointer (aka index) to next byte in string
+		j	string_For		# jump back to the start of the loop
 		notLower:
-			
+		sb	$t0,($t1)		# store char into the capitalized string
+		addi	$a0,$a0,1		# move pointer (aka index) to next byte in string
+		lb 	$t0,($a0)		# load char at new index
+		addi	$t1,$t1,1		# move pointer (aka index) to next byte in string
+		j	string_For		# jump back up to the start
+	IF_NULL:
 	
+	# since we have move the address along for the capitalized string
+	# we need to reset the current address back to the start
+	la	$t1,capString
 	
 	# return values
 	move	$v0,$t1
@@ -303,6 +323,8 @@ userAsking:
 	move	$v1,$v0		# move the decimal value from $v0 to $v1
 	move	$v0,$t0		# move the binary value into $v0
 	
+	
+	return:
 	jr	$ra		# Returns to the main method
 	
 #--------------Convert Binary to Decimal-------------------------
