@@ -117,15 +117,33 @@ main:
 	
 	# Call the method
 	jal 	userAsking	# jumps to the first procedure and stores the next instruction in $ra
-	la	$t0,($v0)	# $t0 = input
-	la	$v0,($v1)	# $t1 = value
+	move	$t0,$v0		# $t0 = input
+	move	$t1,$v1		# $t1 = value
 	
 	# Echo the input
+	li	$v0,4
+	la	$a0,binaryEcho	# load the address of the string
+	syscall
+	move	$a0,$t0		# move the input into the argument for the printout
+	syscall
 	
 	# Print Decimal Value or "Improper Input"
+	bne	$t9,-1,correct_input	# branch if $t9 which is the key to see if its improper != -1
+	improper_input:
+	li	$v0,4
+	la	$a0,improper	# load the address of the string
+	syscall
+	j	Exit_Program
+	correct_input:
+	li	$v0,4
+	la	$a0,decimalEcho	# load the address of the string
+	syscall
+	li	$v0,1
+	move	$a0,$t1		# move the input into the argument for the printout
+	syscall
 	
-
-
+	
+	Exit_Program:
 	li $v0, 10 		# Sets $v0 to "10" to select exit syscall
 	syscall
 
@@ -308,6 +326,32 @@ CapString:
 	# $v0 - binary value
 	# $v1 - decimal value (-1 if not proper input)
 userAsking:
+	
+	# print out the message to ask for the binary digit
+	li	$v0,4
+	la	$a0,msgBinary	# loads the address of the string to be printed
+	syscall
+	# read the incoming string of binary digits
+	li	$v0,8
+	la	$a0,binary	# loads the address of the buffer
+	li	$a1,32		# loads the max number of character to be read
+	syscall
+	
+	# check if the input is proper
+	lb	$t0,($a0)	# binary value pointer
+	for_check:
+		beq	$t0,0xA,Exit_check	# branch if current byte equals newline character
+		beq	$t0,0x30,if_check	# branch if current byte equals 0
+		bne	$t0,0x31,else_check	# branch if current byte equals 1
+		if_check:
+			addi	$a0,$a0,1	# move pointer (aka index) to next byte in string
+			lb 	$t0,($a0)	# load char at new index
+			j	for_check	# jump back up to the for start
+		else_check:
+			li	$t9,-1		# improper value key to -1
+			j	return
+	Exit_check:
+	la	$a0,binary	# load the address of the binary value into $v0
 	# moving the stack pointer
 	addi	$sp,$sp,-4	# move the stack pointer down
 	sw	$ra,($sp)	# store the return address
@@ -319,12 +363,11 @@ userAsking:
 	lw	$ra,($sp)	# pop
 	addi	$sp,$sp,4	# move stack pointer back
 	
+	return:
 	# return values in shape
 	move	$v1,$v0		# move the decimal value from $v0 to $v1
-	move	$v0,$t0		# move the binary value into $v0
-	
-	
-	return:
+	la	$v0,binary	# load the address of the binary value into $v0
+
 	jr	$ra		# Returns to the main method
 	
 #--------------Convert Binary to Decimal-------------------------
@@ -336,14 +379,129 @@ userAsking:
 	# Returns:
 	# $v0 - Decimal Value
 convertBtD:
+	# Register Map:
+	# $t0 = binary value pointer
+	# $t1 = decimal value
+	# $t2 = 0 in ascii (0x30)
+	# $t3 = 1 in ascii (0x31)
+	# $t4 = newline in ascii (0xA)
+	# $t5 = length of the binary value
+	# $t6 = i or starting for
+	# $t7 = base
+	# $t8 = boolean true(1) if negative
+	
+	# create pointer for the binary
+	lb	$t0,($a0)	# binary value pointer
+	li	$t1,0		# decimal value 
+	li	$t2,0x30	# '0' character
+	li	$t3,0x31	# '1' character
+	li 	$t4,0xA		# newline character
+	li	$t5,0		# length of string
+	
+	# get the length of the binary digit
+	# int length = 0;
+	# while(!binary.getChar(i).equals('0xA')){
+	#	length++;
+	#	next character;
+	# }
+	for_Length:
+		beq	$t0,$t4,Exit_Length	# branch if current byte equals newline character
+		addi	$t5,$t5,1	# add 1 to the length
+		addi	$a0,$a0,1	# move pointer (aka index) to next byte in string
+		lb 	$t0,($a0)	# load char at new index
+		j	for_Length	# jump back up to the for start
+	Exit_Length:
+	# if(first byte not equal 1)
+	la	$a0,binary	# load the address of the binary value into $a0
+	lb	$t0,($a0)	# binary value pointer
+	j	notTwos
+	
+	# I can not for the life of me figure out how to convert to unsinged correctly
+	# this is how far I have gotten on it below
+	
+	beq	$t0,$t2,notTwos	# branch if first character is equal to 0
+	li	$t8,1
+	
+	
+	# convert Two's to unsigned
+	li	$t6,1
+	convert_Twos:
+		beq	$t6,$t5,exit_Convert_Twos
+		beq	$t0,$t2,convert_1	# branch if current byte equals 0
+		bne	$t0,$t3,reset_Loop	# branch if current byte does not equal 1
+		sb	$t2,($a0)	# change byte from a 1 to a 0
+		j	reset_Loop
+		convert_1:
+		sb	$t3,($a0)	# change byte from a 0 to a 1
+		reset_Loop:
+		addi	$a0,$a0,1	# move pointer (aka index) to next byte in string
+		lb 	$t0,($a0)	# load char at new index
+		addi	$t6,$t6,1	# increment i by 1
+		j	convert_Twos	# jump back up to the for start
+	exit_Convert_Twos:
+		bne	$t0,$t3,adding_0	# branch if current byte does not equal 1
+		sb	$t3,($a0)
+		addi	$a0,$a0,-1	# move pointer (aka index) to next byte in string
+		lb 	$t0,($a0)	# load char at new index
+		j	adding_Twos
+		adding_0:
+		sb	$t3,($a0)
+		addi	$a0,$a0,-1	# move pointer (aka index) to next byte in string
+		lb 	$t0,($a0)	# load char at new index
+		j	reset_for_conversion
+	adding_Twos:
+		addi	$a0,$a0,-1	# move pointer (aka index) back a byte in string
+		lb 	$t0,($a0)	# load char at new index
+		j	convert_Twos	# jump back up to the for start
+	
+	
+	reset_for_conversion:
+	# reset the pointer
+	la	$a0,binary	# load the address of the binary value into $a0
+	lb	$t0,($a0)	# binary value pointer
+	
+	
+	# this is where the code for the unsigned binary works again
+	
+	# for loop to get through the unsigned binary string
+	# int base = 1
+	# for(int i = 0; i < length;i++){
+	#	if(current byte == ('1')){
+	#		decimal += base
+	#	}
+	#	base = base * 2
+	# 	move byte to next one
+	# }
+	notTwos:
+		li	$t7,1		# $t7 = 1 (starting base)
+		add	$a0,$a0,$t5	# moves the pointer to the last byte
+		addi	$a0,$a0,-1
+		lb	$t0,($a0)	# binary value pointer
+		li	$t6,0
+	
+	notTwos_Loop:		# go to notTwos if there is no 1 in the front of the binary string
+		bgt	$t6,$t5,Exit_Method	# branch if i < length	
+		bne	$t0,$t3,Else_notTwos	# branch if current byte is not 1
+		add	$t1,$t1,$t7		# $t1 (decimal value) = decimal value + base
+		Else_notTwos:
+		mul	$t7,$t7,2		# multiply base by 2
+		addi	$t6,$t6,1	# increments i by 1
+		addi	$a0,$a0,-1	# move pointer (aka index) back next byte in string
+		lb 	$t0,($a0)	# load char at new index
+		j	notTwos_Loop	# jump back up
+	Exit_Method:
 
+	move	$v0,$t1		# set return value to the decimal value
 	jr	$ra		# Returns to the main method
 
 
 	.data
 	
+msgBinary:	.asciiz		"Enter a unsigned Binary Number (32 binary digits max): "
+binaryEcho:	.asciiz		"The input was: "
+decimalEcho:	.asciiz		"The decimal conversion is: "
+improper:	.asciiz		"Improper input!"
 binary:		.space		255				# space for the user input of binary
-decimal:	.space		255				# space for the decimal
 string:		.asciiz		"A quick brown fox jumps over the lazy dog."
 capString:	.space		255
 msgOrginial:	.asciiz		"Orginial: "
